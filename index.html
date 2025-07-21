@@ -42,6 +42,12 @@
             color: #d97706; /* text-amber-600 */
             font-weight: 500;
         }
+        .pagination-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .pagination-btn:hover {
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
@@ -83,8 +89,16 @@
             </div>
             <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="likert-options"></div>
             
+            <!-- Paginación -->
+            <div class="mt-8 pt-4 border-t">
+                 <h3 class="text-sm font-semibold text-center text-gray-600 mb-3">Navegación de Preguntas</h3>
+                 <div id="pagination-container" class="flex flex-wrap justify-center gap-2 max-h-32 overflow-y-auto p-2 bg-gray-50 rounded-lg">
+                    <!-- Los botones de paginación se generan aquí -->
+                 </div>
+            </div>
+
             <!-- Navegación -->
-            <div class="mt-8 flex justify-between items-center">
+            <div class="mt-6 flex justify-between items-center">
                 <button id="prev-btn" class="bg-gray-300 text-gray-700 font-bold py-2 px-6 rounded-lg hover:bg-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Anterior</button>
                 <button id="next-btn" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Siguiente</button>
                 <button id="finish-btn" class="hidden bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition-colors">Finalizar</button>
@@ -227,7 +241,29 @@
                 { category: 'Integridad', text: 'Prefiero ser visto como alguien "difícil" por ser estricto con las normas, que como alguien "amigable" por ser flexible con ellas.', scoreType: 'direct' },
                 { category: 'Integridad', text: 'La integridad también implica cuidar los bienes públicos, como apagar las luces o reportar un grifo que gotea, con el mismo celo que se cuidan los recursos financieros.', scoreType: 'direct' },
                 { category: 'Integridad', text: 'Ante un dilema ético, mi principal guía es lo que dice la ley, por encima de mis convicciones personales o lo que haría "una buena persona".', scoreType: 'direct' },
-                { category: 'Integridad', text: 'Creo que la mejor forma de promover la integridad es a través de sanciones ejemplares, más que con campañas de sensibilización y formación.', scoreType: 'reverse' }
+                { category: 'Integridad', text: 'Creo que la mejor forma de promover la integridad es a través de sanciones ejemplares, más que con campañas de sensibilización y formación.', scoreType: 'reverse' },
+
+                // XI. Preguntas de Alta Complejidad - 20
+                { category: 'Dilemas', text: 'Si una política pública que debo implementar beneficia a mi comunidad local, pero sé que tiene un impacto negativo en otra región, mi deber es implementarla sin cuestionar, enfocándome en mi jurisdicción.', scoreType: 'reverse' },
+                { category: 'Integridad', text: 'Si descubro que un proyecto exitoso de mi área se basó en datos iniciales que fueron ligeramente "ajustados" para asegurar su aprobación, priorizaría la reputación del equipo y no revelaría esa información a posteriori.', scoreType: 'reverse' },
+                { category: 'Comportamiento Ético', text: 'Aceptaría liderar un proyecto para el cual no me siento 100% calificado si mi jefe insiste, confiando en que aprenderé sobre la marcha, en lugar de admitir mis limitaciones y sugerir a alguien más.', scoreType: 'reverse' },
+                { category: 'Justicia', text: 'En una situación de recursos limitados, priorizaría un proyecto con alta visibilidad pública y política sobre uno con mayor impacto social pero menos visible.', scoreType: 'reverse' },
+                { category: 'Dilemas', text: 'Si un compañero está pasando por una crisis personal grave que afecta su rendimiento, cubriría sus errores de forma continua en lugar de informar a RRHH, para proteger su empleo.', scoreType: 'reverse' },
+                { category: 'Integridad', text: 'Considero que omitir un detalle negativo en un informe para evitar alarmar innecesariamente a los directivos es un acto de prudencia, no de deshonestidad.', scoreType: 'reverse' },
+                { category: 'Trabajo en Equipo', text: 'Si mi equipo está de acuerdo en una solución que considero éticamente riesgosa, expresaría mi desacuerdo una vez, pero finalmente acataría la decisión del grupo para mantener la cohesión.', scoreType: 'reverse' },
+                { category: 'Diligencia', text: 'Invertir una cantidad significativa de tiempo en un solo caso para asegurar un resultado perfecto es justificable, incluso si eso significa retrasar el avance de muchos otros casos.', scoreType: 'reverse' },
+                { category: 'Dilemas', text: 'Si un ciudadano me confía información "extraoficial" crucial para un caso, la usaría para guiar mi investigación, aunque no pueda citarla como evidencia formal.', scoreType: 'direct' },
+                { category: 'Integridad', text: 'Creo que es aceptable usar el tiempo de la jornada laboral para actividades de desarrollo profesional (como cursos en línea) que no están directamente autorizadas por la entidad, si benefician mi desempeño a largo plazo.', scoreType: 'reverse' },
+                { category: 'Comunicación Efectiva', text: 'Al comunicar una decisión impopular de la dirección, me enfocaría en transmitir el mensaje tal cual me fue dado, sin intentar justificarlo o contextualizarlo para mi equipo.', scoreType: 'reverse' },
+                { category: 'Dilemas', text: 'Si la única forma de cumplir una meta trimestral es pidiendo a mi equipo que trabaje fines de semana no remunerados, lo haría por el bien de los resultados de la entidad.', scoreType: 'reverse' },
+                { category: 'Integridad', text: 'Si un ex-colega que ahora trabaja en el sector privado me pide una opinión "informal" sobre un proceso de licitación futuro, se la daría como una cortesía profesional.', scoreType: 'reverse' },
+                { category: 'Justicia', text: 'Una norma debe aplicarse de la misma manera para todos, sin importar si una persona tiene barreras significativas (educativas, económicas) para cumplirla.', scoreType: 'reverse' },
+                { category: 'Iniciativa', text: 'Prefiero perfeccionar los procesos existentes en mi área a proponer iniciativas que requieran colaboración interdepartamental, ya que estas últimas son más complejas y lentas.', scoreType: 'reverse' },
+                { category: 'Dilemas', text: 'Si mi jefe me da una instrucción verbal que contradice un procedimiento escrito, seguiría la instrucción verbal para demostrar lealtad y adaptabilidad.', scoreType: 'reverse' },
+                { category: 'Integridad', text: 'La amistad con personas que trabajan en empresas reguladas por mi entidad no representa un conflicto de interés, siempre que no hablemos de trabajo.', scoreType: 'reverse' },
+                { category: 'Orientación al Logro', text: 'Me sentiría satisfecho con mi desempeño si cumplo todas mis metas individuales, aunque el resultado general de mi equipo no sea el esperado.', scoreType: 'reverse' },
+                { category: 'Dilemas', text: 'Si un ciudadano me pide ayuda con un trámite y me cuenta una historia personal conmovedora, me esforzaría más por ayudarle que a alguien que simplemente presenta su solicitud de forma impersonal.', scoreType: 'reverse' },
+                { category: 'Integridad', text: 'La integridad es un ideal al que se aspira, pero en la práctica diaria, es necesario hacer pequeñas concesiones para ser operativo y eficiente.', scoreType: 'reverse' }
             ];
             const likertScale = ['Totalmente en Desacuerdo', 'En Desacuerdo', 'De Acuerdo', 'Totalmente de Acuerdo'];
             let userAnswers = new Array(questions.length).fill(null);
@@ -255,6 +291,7 @@
             const remainingCounter = document.getElementById('remaining-counter');
             const timeUpModal = document.getElementById('time-up-modal');
             const closeModalBtn = document.getElementById('close-modal-btn');
+            const paginationContainer = document.getElementById('pagination-container');
 
             // --- Functions ---
             function startQuiz() {
@@ -278,6 +315,7 @@
                 updateProgressBar();
                 renderLikertOptions();
                 updateNavigation();
+                renderPagination();
             }
 
             function renderLikertOptions() {
@@ -299,6 +337,7 @@
                 updateRemainingCounter();
                 renderLikertOptions();
                 updateNavigation();
+                renderPagination();
                 setTimeout(() => {
                     if (currentQuestionIndex < questions.length - 1) {
                         nextQuestion();
@@ -363,6 +402,29 @@
                         timeUpModal.classList.remove('hidden');
                     }
                 }, 1000);
+            }
+
+            function renderPagination() {
+                paginationContainer.innerHTML = '';
+                for (let i = 0; i < questions.length; i++) {
+                    const btn = document.createElement('button');
+                    btn.textContent = i + 1;
+                    btn.classList.add('pagination-btn', 'w-8', 'h-8', 'rounded-full', 'text-xs', 'font-bold', 'flex-shrink-0');
+                    if (i === currentQuestionIndex) {
+                        btn.classList.add('bg-blue-600', 'text-white', 'ring-2', 'ring-offset-1', 'ring-blue-600');
+                    } else if (userAnswers[i] !== null) {
+                        btn.classList.add('bg-blue-200', 'text-blue-800');
+                    } else {
+                        btn.classList.add('bg-gray-200', 'text-gray-700');
+                    }
+                    btn.addEventListener('click', () => jumpToQuestion(i));
+                    paginationContainer.appendChild(btn);
+                }
+            }
+
+            function jumpToQuestion(index) {
+                currentQuestionIndex = index;
+                displayQuestion();
             }
 
             function showReport() {
