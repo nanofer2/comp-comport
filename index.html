@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuestionario Interactivo DIAN (con Análisis)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .likert-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .likert-option.selected {
+            background-color: #3b82f6; /* bg-blue-500 */
+            color: white;
+            border-color: #3b82f6; /* border-blue-500 */
+        }
+        .progress-bar-fill {
+            transition: width 0.3s ease-in-out;
+        }
+        #final-report-container h4 {
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 700; /* font-bold */
+            color: #1d4ed8; /* text-blue-800 */
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            border-bottom: 2px solid #e5e7eb; /* border-gray-200 */
+            padding-bottom: 0.25rem;
+        }
+        #final-report-container p {
+            margin-bottom: 0.75rem;
+        }
+         #final-report-container .strength {
+            color: #059669; /* text-green-600 */
+            font-weight: 500;
+        }
+        #final-report-container .opportunity {
+            color: #d97706; /* text-amber-600 */
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div id="app-container" class="w-full max-w-3xl bg-white rounded-xl shadow-lg p-6 md:p-8 transition-all duration-500">
+        
+        <!-- Pantalla de Inicio -->
+        <div id="start-screen">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 text-center">Cuestionario Avanzado de Competencias</h1>
+            <p class="mt-4 text-gray-600 text-center">
+                Esta versión del cuestionario presenta escenarios más complejos y dilemas éticos. Tendrás <strong>15 minutos</strong> para completarlo. Al finalizar, recibirás un análisis detallado de tus respuestas.
+            </p>
+            <div class="mt-8 flex justify-center">
+                <button id="start-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors shadow-md">
+                    Comenzar Cuestionario
+                </button>
+            </div>
+        </div>
+
+        <!-- Pantalla del Cuestionario -->
+        <div id="quiz-screen" class="hidden">
+            <!-- Cabecera y Progreso -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm font-medium text-gray-500" id="question-counter"></span>
+                    <span id="timer" class="text-lg font-bold text-red-600">15:00</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full progress-bar-fill" style="width: 0%"></div>
+                </div>
+                 <div class="flex justify-between items-center mt-1">
+                    <h2 class="text-sm font-semibold text-blue-600" id="question-category"></h2>
+                    <span id="remaining-counter" class="text-xs font-medium text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded-full"></span>
+                </div>
+            </div>
+
+            <!-- Pregunta y Opciones -->
+            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 min-h-[120px] flex items-center">
+                <p class="text-lg font-medium text-gray-800 text-center w-full" id="question-text"></p>
+            </div>
+            <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="likert-options"></div>
+            
+            <!-- Navegación -->
+            <div class="mt-8 flex justify-between items-center">
+                <button id="prev-btn" class="bg-gray-300 text-gray-700 font-bold py-2 px-6 rounded-lg hover:bg-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Anterior</button>
+                <button id="next-btn" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Siguiente</button>
+                <button id="finish-btn" class="hidden bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition-colors">Finalizar</button>
+            </div>
+        </div>
+
+        <!-- Pantalla de Resultados -->
+        <div id="results-screen" class="hidden">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 text-center">Resultados del Cuestionario</h1>
+            
+            <div id="final-report-container" class="mt-6 text-gray-700 max-h-[60vh] overflow-y-auto pr-2"></div>
+            <div id="results-summary-container" class="hidden mt-6 space-y-4 max-h-[60vh] overflow-y-auto pr-2"></div>
+
+            <div class="text-center mt-6 space-x-4">
+                 <button id="toggle-summary-btn" class="bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-lg hover:bg-gray-300 transition-colors">Ver Respuestas Detalladas</button>
+                 <button id="restart-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors shadow-md">
+                    Volver a Empezar
+                </button>
+            </div>
+        </div>
+
+        <!-- Modal de Tiempo Agotado -->
+        <div id="time-up-modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-lg shadow-xl p-8 text-center max-w-sm w-full">
+                <h2 class="text-2xl font-bold text-red-600 mb-4">¡Tiempo Agotado!</h2>
+                <p class="text-gray-700 mb-6">Tu tiempo para completar el cuestionario ha finalizado. Se mostrará tu reporte con las respuestas guardadas.</p>
+                <button id="close-modal-btn" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 w-full">Ver Reporte</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const questions = [
+                // I. Honestidad (con dilemas) - 5
+                { category: 'Honestidad', text: 'Si descubro que un compañero cercano ha cometido un error administrativo menor sin malas intenciones, prefiero orientarlo para que lo corrija él mismo antes que reportarlo a un superior.', scoreType: 'reverse' },
+                { category: 'Honestidad', text: 'Considero que ser totalmente transparente sobre las dificultades internas de un proyecto puede desmotivar al equipo, por lo que a veces es mejor comunicar solo los aspectos positivos.', scoreType: 'reverse' },
+                { category: 'Honestidad', text: 'Ante una solicitud de información pública compleja que podría ser malinterpretada por la ciudadanía, priorizo entregar los datos exactos, aunque esto pueda generar una imagen negativa de la entidad.', scoreType: 'direct' },
+                { category: 'Honestidad', text: 'Si un ciudadano me ofrece un pequeño regalo (ej. una caja de chocolates) como agradecimiento por un buen servicio, lo rechazaría explicando la normativa, aunque esto pueda parecer descortés.', scoreType: 'direct' },
+                { category: 'Honestidad', text: 'Utilizar la impresora de la oficina para imprimir un documento personal urgente de 5 páginas es una falta menor que no perjudica a la entidad.', scoreType: 'reverse' },
+                
+                // II. Respeto (en situaciones difíciles) - 5
+                { category: 'Respeto', text: 'Cuando un ciudadano está alterado y me habla en un tono elevado, me resulta difícil mantener la misma amabilidad y paciencia que con alguien que se dirige a mí de forma calmada.', scoreType: 'reverse' },
+                { category: 'Respeto', text: 'Si un colega presenta una idea que considero completamente inviable, prefiero no contradecirlo en público para no afectar su confianza, y hablarlo después en privado.', scoreType: 'direct' },
+                { category: 'Respeto', text: 'En un debate de equipo, valoro más llegar a la mejor solución posible, incluso si esto implica interrumpir a otros o ser muy directo en mis críticas.', scoreType: 'reverse' },
+                { category: 'Respeto', text: 'Me siento incómodo corrigiendo a un compañero de mayor antigüedad o rango, aunque sepa que su proceder no es el más adecuado.', scoreType: 'reverse' },
+                { category: 'Respeto', text: 'Es difícil separar mis prejuicios personales sobre ciertos temas al momento de atender a un usuario con una ideología muy opuesta a la mía.', scoreType: 'reverse' },
+
+                // III. Compromiso (con límites y realidades) - 5
+                { category: 'Compromiso', text: 'Frente a una sobrecarga de trabajo, creo que es más importante cumplir con todo lo asignado, incluso sacrificando mi tiempo personal, que renegociar los plazos.', scoreType: 'direct' },
+                { category: 'Compromiso', text: 'Si una meta asignada por la entidad me parece poco realista o mal planificada, mi motivación para alcanzarla disminuye considerablemente.', scoreType: 'reverse' },
+                { category: 'Compromiso', text: 'Dedicar tiempo a capacitarme en temas que no están directamente relacionados con mis funciones actuales es una inversión de tiempo que no siempre puedo justificar.', scoreType: 'reverse' },
+                { category: 'Compromiso', text: 'Cuando un ciudadano presenta una queja que escapa a mi competencia, mi responsabilidad termina al indicarle el canal correcto para su trámite.', scoreType: 'reverse' },
+                { category: 'Compromiso', text: 'Asumir tareas adicionales que nadie quiere hacer para apoyar al equipo es una muestra de compromiso que siempre estoy dispuesto a ofrecer.', scoreType: 'direct' },
+
+                // IV. Diligencia (vs. Calidad y Flexibilidad) - 5
+                { category: 'Diligencia', text: 'Prefiero entregar un trabajo a tiempo cumpliendo con el 80% de los requisitos, que entregarlo tarde pero con el 100% de la calidad esperada.', scoreType: 'reverse' },
+                { category: 'Diligencia', text: 'Seguir un procedimiento al pie de la letra es más importante que buscar una solución más rápida y eficiente que se desvíe ligeramente de la norma.', scoreType: 'direct' },
+                { category: 'Diligencia', text: 'Cuando un proceso es muy burocrático y lento, me siento tentado a buscar "atajos" para agilizar la respuesta al ciudadano, siempre que no infrinja la ley.', scoreType: 'reverse' },
+                { category: 'Diligencia', text: 'Invertir tiempo en proponer mejoras para el equipo es complicado cuando mi carga de trabajo individual ya es muy alta.', scoreType: 'reverse' },
+                { category: 'Diligencia', text: 'La responsabilidad por el uso eficiente de los recursos públicos recae principalmente en los directivos, no tanto en los funcionarios de niveles operativos.', scoreType: 'reverse' },
+
+                // V. Justicia (con subjetividad y presiones) - 5
+                { category: 'Justicia', text: 'Al tomar una decisión que afecta a varios usuarios, es prácticamente imposible dejar de lado la empatía y no inclinarse ligeramente por la situación que me parece más conmovedora.', scoreType: 'reverse' },
+                { category: 'Justicia', text: 'Si una norma interna me parece injusta en un caso particular, buscaría la forma de interpretarla de la manera más flexible posible para beneficiar al afectado.', scoreType: 'direct' },
+                { category: 'Justicia', text: 'En una decisión grupal, la opinión de la mayoría debería prevalecer, incluso si una minoría presenta argumentos válidos pero opuestos.', scoreType: 'reverse' },
+                { category: 'Justicia', text: 'Dar un trato prioritario a un caso por recomendación de un superior, sin que haya un criterio técnico que lo justifique, es una práctica aceptable si agiliza los procesos.', scoreType: 'reverse' },
+                { category: 'Justicia', text: 'Proteger los derechos de un ciudadano es importante, pero no a costa de generar una carga de trabajo desproporcionada para la entidad.', scoreType: 'reverse' },
+
+                // VI. Innovación (con riesgos y pragmatismo) - 5
+                { category: 'Innovación', text: 'Implementar una solución nueva que implica un riesgo de fracaso es algo que prefiero evitar si los métodos tradicionales, aunque menos eficientes, garantizan un resultado seguro.', scoreType: 'reverse' },
+                { category: 'Innovación', text: 'Escuchar sugerencias de mejora de todos los ciudadanos es importante, pero en la práctica, solo las que vienen de expertos o usuarios frecuentes son realmente útiles.', scoreType: 'reverse' },
+                { category: 'Innovación', text: 'Me siento más cómodo aplicando ideas innovadoras que ya han sido probadas con éxito en otras áreas que proponiendo algo completamente nuevo.', scoreType: 'direct' },
+                { category: 'Innovación', text: 'El tiempo dedicado a investigar nuevas formas de hacer mi trabajo compite directamente con el tiempo para cumplir mis metas actuales.', scoreType: 'reverse' },
+                { category: 'Innovación', text: 'Si una nueva herramienta tecnológica es impuesta y no me siento cómodo con ella, tiendo a volver a mis métodos anteriores en cuanto puedo.', scoreType: 'reverse' },
+
+                // VII. Comportamiento Ético (en la práctica) - 5
+                { category: 'Comportamiento Ético', text: 'Ser un referente ético para los demás es una gran responsabilidad que no todos los servidores públicos tienen por qué asumir.', scoreType: 'reverse' },
+                { category: 'Comportamiento Ético', text: 'Si mis valores personales entran en conflicto con una directriz de la entidad, mi deber como funcionario es acatar la directriz sin cuestionarla.', scoreType: 'reverse' },
+                { category: 'Comportamiento Ético', text: 'Asumir las consecuencias de un error es más fácil cuando el error es solo mío que cuando involucra a todo un equipo.', scoreType: 'direct' },
+                { category: 'Comportamiento Ético', text: 'Hablar con orgullo de la entidad es más difícil cuando hay noticias negativas sobre ella en los medios de comunicación.', scoreType: 'reverse' },
+                { category: 'Comportamiento Ético', text: 'Promover activamente el código de integridad entre mis compañeros puede ser visto como una actitud arrogante o de superioridad moral.', scoreType: 'reverse' },
+                
+                // VIII. Competencias Específicas y Dilemas - 10
+                { category: 'Dilemas', text: 'Para optimizar mi tiempo, a veces agrupo las consultas de varios compañeros para resolverlas en un solo momento, aunque eso signifique que algunos deban esperar más tiempo por una respuesta.', scoreType: 'reverse' },
+                { category: 'Dilemas', text: 'Prefiero asumir más tareas de las que puedo manejar para demostrar compromiso, aunque la calidad de algunas pueda verse afectada, que rechazar trabajo y parecer poco colaborativo.', scoreType: 'reverse' },
+                { category: 'Dilemas', text: 'Si un ciudadano me hace una pregunta cuya respuesta sé que le va a disgustar, a veces suavizo la información para evitar una confrontación directa.', scoreType: 'reverse' },
+                { category: 'Dilemas', text: 'Apoyaría un nuevo sistema automatizado que agiliza el 95% de los casos, aunque se sepa que el 5% de los casos más complejos recibirán un servicio de menor calidad.', scoreType: 'reverse' },
+                { category: 'Dilemas', text: 'Ante un ciudadano con una necesidad urgente pero que no cumple todos los requisitos formales, me inclino a buscar una excepción a la regla para ayudarle.', scoreType: 'direct' },
+                { category: 'Adaptabilidad', text: 'Me cuesta adaptarme a un nuevo jefe que tiene un estilo de liderazgo y comunicación muy diferente al anterior.', scoreType: 'reverse' },
+                { category: 'Orientación al Logro', text: 'Cuando un objetivo es extremadamente desafiante, a veces me enfoco más en el proceso y el esfuerzo que en el resultado final.', scoreType: 'reverse' },
+                { category: 'Trabajo en Equipo', text: 'En un proyecto grupal, prefiero encargarme yo mismo de una tarea crítica para asegurarme de que quede bien hecha, en lugar de confiarla a un compañero menos experimentado.', scoreType: 'reverse' },
+                { category: 'Comunicación Efectiva', text: 'Evito dar retroalimentación negativa a mis compañeros por temor a generar un mal ambiente laboral.', scoreType: 'reverse' },
+                { category: 'Solución de Problemas', text: 'Ante un problema complejo, tiendo a buscar la primera solución viable que aparece en lugar de explorar múltiples alternativas que podrían ser mejores pero requieren más tiempo.', scoreType: 'reverse' },
+
+                // IX. Competencias Comportamentales Adicionales - 15
+                { category: 'Adaptabilidad', text: 'Cuando la entidad implementa un nuevo software que considero menos eficiente que el anterior, mi primera reacción es expresar mi descontento al equipo.', scoreType: 'reverse' },
+                { category: 'Trabajo en Equipo', text: 'Si un miembro del equipo no está cumpliendo con su parte, prefiero asumir su trabajo para no retrasar el proyecto en lugar de confrontar la situación directamente con él o el líder.', scoreType: 'reverse' },
+                { category: 'Orientación al Logro', text: 'Considero que alcanzar una meta es un éxito, incluso si en el proceso se generaron tensiones o conflictos significativos dentro del equipo.', scoreType: 'reverse' },
+                { category: 'Comunicación Efectiva', text: 'Cuando explico un tema técnico complejo, prefiero usar la jerga precisa aunque algunos de mis interlocutores no la entiendan completamente.', scoreType: 'reverse' },
+                { category: 'Iniciativa', text: 'Generalmente espero a que mi superior me asigne nuevas tareas en lugar de buscar proactivamente áreas de mejora o nuevos proyectos.', scoreType: 'reverse' },
+                { category: 'Solución de Problemas', text: 'Ante un problema recurrente, me enfoco en solucionar el síntoma inmediato en lugar de invertir tiempo en analizar y resolver la causa raíz.', scoreType: 'reverse' },
+                { category: 'Dilemas', text: 'Creo que un servidor público comprometido debe estar disponible para atender asuntos laborales fuera de su horario si la situación lo amerita, incluso de forma recurrente.', scoreType: 'direct' },
+                { category: 'Dilemas', text: 'Si tengo una idea para mejorar un proceso, primero la valido con varios superiores antes de experimentar a pequeña escala, aunque esto retrase su posible implementación.', scoreType: 'direct' },
+                { category: 'Dilemas', text: 'Si un compañero me pide mi opinión sobre un trabajo que considero deficiente, tiendo a enfocarme en los pocos aspectos positivos para no desmotivarlo.', scoreType: 'reverse' },
+                { category: 'Adaptabilidad', text: 'Me siento frustrado cuando las prioridades de mi trabajo cambian repentinamente sin una explicación detallada.', scoreType: 'reverse' },
+                { category: 'Trabajo en Equipo', text: 'Creo que las decisiones en un equipo deben tomarse por consenso, incluso si esto implica adoptar una solución menos óptima que la propuesta por un solo miembro.', scoreType: 'reverse' },
+                { category: 'Orientación al Logro', text: 'Si estoy cerca de cumplir una meta importante, estoy dispuesto a pedirle a mis compañeros que me ayuden con mis tareas, aunque ellos también tengan una alta carga de trabajo.', scoreType: 'reverse' },
+                { category: 'Comunicación Efectiva', text: 'Prefiero comunicarme por correo electrónico para tener un registro escrito de todo, incluso para asuntos que podrían resolverse rápidamente con una llamada o conversación.', scoreType: 'reverse' },
+                { category: 'Iniciativa', text: 'Dedico una parte de mi tiempo a pensar en cómo mi rol puede aportar más valor a la entidad, más allá de mis funciones explícitas.', scoreType: 'direct' },
+                { category: 'Solución de Problemas', text: 'Cuando una solución que implementé no funciona como esperaba, me cuesta admitir el error y buscar una alternativa diferente.', scoreType: 'reverse' },
+
+                // X. Preguntas Adicionales de Integridad - 30
+                { category: 'Integridad', text: 'Si conozco información confidencial que podría beneficiar a un amigo en un proceso de contratación con otra entidad pública, considero que compartirla sería una falta grave de integridad.', scoreType: 'direct' },
+                { category: 'Integridad', text: 'Aceptaría una invitación a almorzar de un proveedor con el que mi área tiene un contrato vigente, siempre que se hable de temas generales y no del contrato.', scoreType: 'reverse' },
+                { category: 'Integridad', text: 'Si mi superior me pide realizar una tarea que, aunque no es ilegal, me parece éticamente cuestionable, la realizaría dejando constancia por escrito de mi objeción.', scoreType: 'direct' },
+                { category: 'Integridad', text: 'Creo que la lealtad a mi equipo y a mi jefe directo es tan importante como mi deber de reportar una irregularidad cometida por ellos.', scoreType: 'reverse' },
+                { category: 'Integridad', text: 'Utilizaría mi posición en la entidad para agilizar un trámite personal de un familiar en otra institución del Estado si tuviera la oportunidad.', scoreType: 'reverse' },
+                { category: 'Integridad', text: 'Para mí, la integridad significa principalmente no cometer actos de corrupción, más que buscar activamente la excelencia y el bien común.', scoreType: 'reverse' },
+                { category: 'Integridad', text: 'Si un procedimiento interno me parece ineficiente y perjudicial para el ciudadano, buscaría formas de no aplicarlo estrictamente mientras se busca una solución formal.', scoreType: 'reverse' },
+                { category: 'Integridad', text: 'Es responsabilidad de cada funcionario velar por su propia integridad; no es mi deber estar pendiente de la conducta de mis compañeros.', scoreType: 'reverse' },
+                { category: 'Integridad', text: 'Si cometo un error que nadie ha notado y que no tiene consecuencias financieras directas, no veo la necesidad de informarlo si puedo corregirlo discretamente.', scoreType: 'reverse' },
+                { category: 'Integridad', text: 'La apariencia de un conflicto de interés es tan importante como el conflicto en sí, por lo que evitaría cualquier situación que pudiera ser malinterpretada.', scoreType: 'direct' },
+                { category: 'Integridad', text: 'Considero que las normas sobre regalos e invitaciones son demasiado estrictas y no se adaptan a las costumbres sociales y de negocios.', scoreType: 'reverse' },
+                { category: 'Integridad', text: 'Si un político influyente me pide priorizar un caso, lo haría para mantener una buena relación institucional, siempre que no se altere el resultado final del trámite.', scoreType: 'reverse' },
+                { category: 'Integridad', text: 'La información que adquiero en mi cargo es un activo de la entidad, y me abstendría de usarla para cualquier fin personal, incluso después de haber dejado el puesto.', scoreType: 'direct' },
+                { category: 'Integridad', text: 'Frente a una "zona gris" de la normativa, donde una acción no está explícitamente prohibida, prefiero abstenerme si considero que va en contra del espíritu de la ley.', scoreType: 'direct' },
+                { category: 'Integridad', text: 'Creo que es aceptable que un funcionario aproveche las oportunidades de networking de su cargo para construir relaciones que puedan beneficiar su carrera profesional futura fuera del sector público.', scoreType: 'reverse' },
+                { category: 'Integridad', text: 'Si un compañero se atribuye el crédito por un trabajo que hicimos juntos, lo confrontaría en privado en lugar de aclararlo públicamente.', scoreType: 'direct' },
+                { category: 'Integridad', text: 'La presión por cumplir metas cuantitativas a veces justifica flexibilizar ciertos controles de calidad o procedimientos.', scoreType: 'reverse' },
+                { category: 'Integridad', text: 'Me siento cómodo recomendando a un amigo para un puesto en mi entidad si creo sinceramente que es competente, aunque otros candidatos puedan tener un perfil similar.', scoreType: 'reverse' },
+                { category: 'Integridad', text: 'Mi compromiso con la integridad se mantiene igual de fuerte, independientemente de si mis jefes o compañeros actúan de la misma manera.', scoreType: 'direct' },
+                { category: 'Integridad', text: 'Si un ciudadano se queja de un mal servicio por parte de un colega, mi primera acción es defender al colega y a la entidad antes de investigar a fondo la queja.', scoreType: 'reverse' },
+                { category: 'Integridad', text: 'Participar en actividades políticas fuera del horario laboral es un derecho personal que no interfiere con mi deber de actuar con imparcialidad en mi cargo.', scoreType: 'direct' },
+                { category: 'Integridad', text: 'Si una decisión beneficia a la mayoría de los ciudadanos pero perjudica de forma importante a una minoría vulnerable, me opondría a ella.', scoreType: 'direct' },
+                { category: 'Integridad', text: 'Es más fácil mantener la integridad en un ambiente donde todos son vigilados que en uno basado únicamente en la confianza.', scoreType: 'reverse' },
+                { category: 'Integridad', text: 'Denunciar una irregularidad me genera temor por las posibles represalias o el mal ambiente laboral que podría generar.', scoreType: 'reverse' },
+                { category: 'Integridad', text: 'Considero que mi vida privada y mis acciones en redes sociales no tienen relación con mi imagen como servidor público.', scoreType: 'reverse' },
+                { category: 'Integridad', text: 'Si una norma es claramente obsoleta, creo que es válido no aplicarla incluso antes de que sea derogada formalmente.', scoreType: 'reverse' },
+                { category: 'Integridad', text: 'Prefiero ser visto como alguien "difícil" por ser estricto con las normas, que como alguien "amigable" por ser flexible con ellas.', scoreType: 'direct' },
+                { category: 'Integridad', text: 'La integridad también implica cuidar los bienes públicos, como apagar las luces o reportar un grifo que gotea, con el mismo celo que se cuidan los recursos financieros.', scoreType: 'direct' },
+                { category: 'Integridad', text: 'Ante un dilema ético, mi principal guía es lo que dice la ley, por encima de mis convicciones personales o lo que haría "una buena persona".', scoreType: 'direct' },
+                { category: 'Integridad', text: 'Creo que la mejor forma de promover la integridad es a través de sanciones ejemplares, más que con campañas de sensibilización y formación.', scoreType: 'reverse' }
+            ];
+            const likertScale = ['Totalmente en Desacuerdo', 'En Desacuerdo', 'De Acuerdo', 'Totalmente de Acuerdo'];
+            let userAnswers = new Array(questions.length).fill(null);
+            let currentQuestionIndex = 0;
+            let timerInterval = null;
+
+            // --- DOM Elements ---
+            const startScreen = document.getElementById('start-screen');
+            const quizScreen = document.getElementById('quiz-screen');
+            const resultsScreen = document.getElementById('results-screen');
+            const startBtn = document.getElementById('start-btn');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const finishBtn = document.getElementById('finish-btn');
+            const restartBtn = document.getElementById('restart-btn');
+            const questionText = document.getElementById('question-text');
+            const questionCategory = document.getElementById('question-category');
+            const questionCounter = document.getElementById('question-counter');
+            const progressBar = document.getElementById('progress-bar');
+            const likertOptionsContainer = document.getElementById('likert-options');
+            const resultsSummaryContainer = document.getElementById('results-summary-container');
+            const finalReportContainer = document.getElementById('final-report-container');
+            const toggleSummaryBtn = document.getElementById('toggle-summary-btn');
+            const timerDisplay = document.getElementById('timer');
+            const remainingCounter = document.getElementById('remaining-counter');
+            const timeUpModal = document.getElementById('time-up-modal');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+
+            // --- Functions ---
+            function startQuiz() {
+                currentQuestionIndex = 0;
+                userAnswers.fill(null);
+                startScreen.classList.add('hidden');
+                resultsScreen.classList.add('hidden');
+                quizScreen.classList.remove('hidden');
+                finishBtn.classList.add('hidden');
+                nextBtn.classList.remove('hidden');
+                startTimer(15 * 60);
+                displayQuestion();
+                updateRemainingCounter();
+            }
+
+            function displayQuestion() {
+                const question = questions[currentQuestionIndex];
+                questionCategory.textContent = question.category.startsWith('Dilema') ? 'Dilema' : question.category;
+                questionText.textContent = question.text;
+                questionCounter.textContent = `Pregunta ${currentQuestionIndex + 1} de ${questions.length}`;
+                updateProgressBar();
+                renderLikertOptions();
+                updateNavigation();
+            }
+
+            function renderLikertOptions() {
+                likertOptionsContainer.innerHTML = '';
+                likertScale.forEach(optionText => {
+                    const button = document.createElement('button');
+                    button.textContent = optionText;
+                    button.classList.add('likert-option', 'w-full', 'p-4', 'border', 'border-gray-300', 'rounded-lg', 'text-gray-700', 'font-medium', 'transition-all', 'duration-200', 'text-sm', 'sm:text-base');
+                    if (userAnswers[currentQuestionIndex] === optionText) {
+                        button.classList.add('selected');
+                    }
+                    button.addEventListener('click', () => selectAnswer(optionText));
+                    likertOptionsContainer.appendChild(button);
+                });
+            }
+
+            function selectAnswer(answer) {
+                userAnswers[currentQuestionIndex] = answer;
+                updateRemainingCounter();
+                renderLikertOptions();
+                updateNavigation();
+                setTimeout(() => {
+                    if (currentQuestionIndex < questions.length - 1) {
+                        nextQuestion();
+                    } else {
+                        updateNavigation();
+                    }
+                }, 250);
+            }
+
+            function nextQuestion() {
+                if (currentQuestionIndex < questions.length - 1) {
+                    currentQuestionIndex++;
+                    displayQuestion();
+                }
+            }
+
+            function prevQuestion() {
+                if (currentQuestionIndex > 0) {
+                    currentQuestionIndex--;
+                    displayQuestion();
+                }
+            }
+
+            function updateNavigation() {
+                prevBtn.disabled = currentQuestionIndex === 0;
+                const allAnswered = userAnswers.every(answer => answer !== null);
+                if (currentQuestionIndex === questions.length - 1) {
+                    nextBtn.classList.add('hidden');
+                    finishBtn.classList.remove('hidden');
+                    finishBtn.disabled = !allAnswered;
+                } else {
+                    nextBtn.classList.remove('hidden');
+                    finishBtn.classList.add('hidden');
+                    nextBtn.disabled = userAnswers[currentQuestionIndex] === null;
+                }
+                 if(allAnswered){
+                    finishBtn.disabled = false;
+                }
+            }
+
+            function updateProgressBar() {
+                const answeredCount = userAnswers.filter(answer => answer !== null).length;
+                const progress = (answeredCount / questions.length) * 100;
+                progressBar.style.width = `${progress}%`;
+            }
+
+            function updateRemainingCounter() {
+                const remaining = userAnswers.filter(a => a === null).length;
+                remainingCounter.textContent = `Faltan: ${remaining}`;
+            }
+
+            function startTimer(durationInSeconds) {
+                if (timerInterval) clearInterval(timerInterval);
+                let timer = durationInSeconds;
+                timerInterval = setInterval(() => {
+                    const minutes = Math.floor(timer / 60);
+                    const seconds = timer % 60;
+                    timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    
+                    if (--timer < 0) {
+                        clearInterval(timerInterval);
+                        timeUpModal.classList.remove('hidden');
+                    }
+                }, 1000);
+            }
+
+            function showReport() {
+                clearInterval(timerInterval);
+                quizScreen.classList.add('hidden');
+                resultsScreen.classList.remove('hidden');
+                timeUpModal.classList.add('hidden');
+                resultsSummaryContainer.classList.add('hidden');
+                finalReportContainer.classList.remove('hidden');
+                toggleSummaryBtn.textContent = 'Ver Respuestas Detalladas';
+                generateFinalReport();
+            }
+
+            function generateSummary() {
+                resultsSummaryContainer.innerHTML = '';
+                const resultsByCategory = questions.reduce((acc, question, index) => {
+                    const category = question.category.startsWith('Dilema') ? 'Dilemas y Competencias Específicas' : question.category;
+                    if (!acc[category]) acc[category] = [];
+                    acc[category].push({ text: question.text, answer: userAnswers[index] || 'Sin respuesta' });
+                    return acc;
+                }, {});
+
+                for (const category in resultsByCategory) {
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.className = 'bg-gray-50 p-4 rounded-lg border';
+                    const categoryTitle = document.createElement('h3');
+                    categoryTitle.textContent = category;
+                    categoryTitle.className = 'text-lg font-bold text-blue-700 mb-3';
+                    categoryDiv.appendChild(categoryTitle);
+                    const ul = document.createElement('ul');
+                    ul.className = 'space-y-3 list-disc list-inside text-gray-700';
+                    resultsByCategory[category].forEach(item => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `${item.text} <br><span class="font-semibold text-blue-600 pl-4">Tu respuesta: ${item.answer}</span>`;
+                        ul.appendChild(li);
+                    });
+                    categoryDiv.appendChild(ul);
+                    resultsSummaryContainer.appendChild(categoryDiv);
+                }
+            }
+
+            function toggleSummary() {
+                const isSummaryHidden = resultsSummaryContainer.classList.contains('hidden');
+                if (isSummaryHidden) {
+                    generateSummary();
+                    resultsSummaryContainer.classList.remove('hidden');
+                    finalReportContainer.classList.add('hidden');
+                    toggleSummaryBtn.textContent = 'Ver Análisis de Competencias';
+                } else {
+                    resultsSummaryContainer.classList.add('hidden');
+                    finalReportContainer.classList.remove('hidden');
+                    toggleSummaryBtn.textContent = 'Ver Respuestas Detalladas';
+                }
+            }
+            
+            function generateFinalReport() {
+                const scoreValues = { 'Totalmente en Desacuerdo': 1, 'En Desacuerdo': 2, 'De Acuerdo': 3, 'Totalmente de Acuerdo': 4 };
+
+                let scores = {};
+                questions.forEach((q, i) => {
+                    const category = q.category;
+                    if (!scores[category]) scores[category] = { total: 0, count: 0 };
+                    
+                    const answerValue = scoreValues[userAnswers[i]];
+                    if(answerValue){
+                        let score = 0;
+                        if (q.scoreType === 'direct') {
+                            score = answerValue;
+                        } else { // reverse
+                            score = 5 - answerValue;
+                        }
+                        scores[category].total += score;
+                        scores[category].count++;
+                    }
+                });
+
+                let reportHTML = `<h2 class="text-xl font-bold text-gray-800 text-center mb-4">Análisis de Competencias</h2>`;
+                
+                const reportOrder = ['Integridad', 'Honestidad', 'Respeto', 'Compromiso', 'Diligencia', 'Justicia', 'Innovación', 'Comportamiento Ético', 'Adaptabilidad', 'Trabajo en Equipo', 'Orientación al Logro', 'Comunicación Efectiva', 'Iniciativa', 'Solución de Problemas', 'Dilemas'];
+
+                reportOrder.forEach(category => {
+                    if (scores[category] && scores[category].count > 0) {
+                        const avg = scores[category].total / scores[category].count;
+                        reportHTML += getFeedbackForCategory(category, avg);
+                    }
+                });
+
+                finalReportContainer.innerHTML = reportHTML;
+            }
+
+            function getFeedbackForCategory(category, avgScore) {
+                let feedback = `<h4>${category}</h4>`;
+                let strength = '', opportunity = '';
+
+                switch(category) {
+                    case 'Integridad':
+                        if (avgScore > 2.8) strength = `Demuestras una fuerte coherencia entre tus creencias y acciones, priorizando el bien común y la rectitud incluso en situaciones complejas o de presión. Tu marco ético parece sólido y bien definido.`;
+                        else opportunity = `Enfrentas dilemas al ponderar la lealtad, la eficiencia o las relaciones personales frente a la aplicación estricta de los principios de integridad. Fortalecer tu capacidad para navegar 'zonas grises' y resistir presiones es un área clave.`;
+                        break;
+                    case 'Honestidad':
+                        if (avgScore > 2.8) strength = `Tus respuestas indican una fuerte inclinación hacia la transparencia, la rectitud y el cumplimiento normativo. Valoras la verdad y la correcta gestión de los recursos.`;
+                        else opportunity = `Se observa una tendencia a flexibilizar la transparencia o las normas en ciertas situaciones, posiblemente para proteger al equipo o evitar conflictos. Es un área clave para reforzar.`;
+                        break;
+                    case 'Respeto':
+                        if (avgScore > 2.8) strength = `Muestras una tendencia a gestionar las interacciones con calma y diplomacia, incluso en situaciones de conflicto o desacuerdo. Priorizas la construcción de un buen ambiente laboral.`;
+                        else opportunity = `Pareces encontrar desafíos al mantener la calma o la diplomacia en situaciones de alta presión o con interlocutores difíciles. La comunicación asertiva en contextos complejos es un punto a desarrollar.`;
+                        break;
+                    case 'Compromiso':
+                        if (avgScore > 2.8) strength = `Demuestras una alta disposición a ir más allá de tus funciones para apoyar al equipo y cumplir con los objetivos, mostrando un fuerte sentido de pertenencia.`;
+                        else opportunity = `Tus respuestas sugieren que tu motivación puede verse afectada por factores externos como la sobrecarga de trabajo o metas poco claras. Es importante trabajar en la resiliencia y la proactividad.`;
+                        break;
+                    case 'Diligencia':
+                        if (avgScore > 2.8) strength = `Valoras el cumplimiento de los procedimientos y la optimización de los procesos. Muestras una clara orientación hacia la eficiencia y el uso correcto de los recursos.`;
+                        else opportunity = `Se percibe una tensión entre seguir los procedimientos y la búsqueda de agilidad. A veces podrías priorizar la rapidez sobre la rigurosidad o la calidad, un equilibrio que requiere atención.`;
+                        break;
+                    case 'Justicia':
+                        if (avgScore > 2.8) strength = `Tus decisiones tienden a basarse en la objetividad, la equidad y la aplicación coherente de las normas, buscando un trato imparcial para todos los involucrados.`;
+                        else opportunity = `La empatía o las presiones externas pueden influir en tu toma de decisiones, llevándote a flexibilizar la norma. Mantener la objetividad en casos sensibles es un área de desarrollo.`;
+                        break;
+                    case 'Innovación':
+                         if (avgScore > 2.8) strength = `Muestras apertura a nuevas ideas y una disposición a mejorar los procesos, aunque con un enfoque pragmático y medido.`;
+                        else opportunity = `Pareces preferir la seguridad de los métodos tradicionales frente a la incertidumbre de la innovación. Fomentar la tolerancia al riesgo y la experimentación podría potenciar esta competencia.`;
+                        break;
+                    case 'Comportamiento Ético':
+                         if (avgScore > 2.8) strength = `Demuestras una sólida base ética, asumiendo la responsabilidad de tus actos y mostrando coherencia entre tus valores y acciones.`;
+                        else opportunity = `Enfrentas dilemas cuando tus valores personales chocan con directrices o cuando la ética implica un costo personal o para el equipo. Fortalecer la capacidad de actuar éticamente bajo presión es crucial.`;
+                        break;
+                    case 'Adaptabilidad':
+                        if (avgScore > 2.8) strength = `Muestras una buena capacidad para ajustarte a los cambios, ya sean de procesos, herramientas o prioridades, manteniendo una actitud constructiva.`;
+                        else opportunity = `Los cambios inesperados o las nuevas herramientas parecen generar frustración o resistencia. Fortalecer la flexibilidad y la apertura al cambio es un área de desarrollo clave.`;
+                        break;
+                    case 'Trabajo en Equipo':
+                        if (avgScore > 2.8) strength = `Valoras la colaboración y tiendes a buscar soluciones que beneficien al grupo. Muestras disposición para apoyar a tus compañeros y construir sobre las ideas de los demás.`;
+                        else opportunity = `Podrías tener una tendencia a trabajar de forma más individual o a evitar confrontaciones necesarias para el buen funcionamiento del equipo. Mejorar la comunicación directa y la confianza en los compañeros es importante.`;
+                        break;
+                    case 'Orientación al Logro':
+                        if (avgScore > 2.8) strength = `Te enfocas en los resultados y en cumplir los objetivos establecidos, mostrando persistencia ante los desafíos.`;
+                        else opportunity = `La consecución de metas puede verse opacada por la dificultad de los objetivos o por los conflictos que puedan surgir. Es crucial equilibrar la ambición con la gestión del proceso y las relaciones interpersonales.`;
+                        break;
+                    case 'Comunicación Efectiva':
+                        if (avgScore > 2.8) strength = `Buscas que tu comunicación sea clara, asertiva y adaptada a tu interlocutor, facilitando el entendimiento y evitando malentendidos.`;
+                        else opportunity = `Podrías tener dificultades para dar retroalimentación negativa o para adaptar tu lenguaje a diferentes audiencias. La asertividad y la empatía comunicativa son áreas para potenciar.`;
+                        break;
+                    case 'Iniciativa':
+                        if (avgScore > 2.8) strength = `Muestras una actitud proactiva, buscando oportunidades de mejora y aportando valor más allá de las tareas asignadas explícitamente.`;
+                        else opportunity = `Tiendes a esperar instrucciones en lugar de proponer nuevas acciones. Fomentar la curiosidad y la autonomía puede ayudarte a desarrollar esta competencia.`;
+                        break;
+                    case 'Solución de Problemas':
+                        if (avgScore > 2.8) strength = `Abordas los problemas de forma estructurada, buscando analizar las causas y explorar diferentes alternativas antes de actuar.`;
+                        else opportunity = `Ante un problema, podrías inclinarte por la solución más rápida o evidente en lugar de realizar un análisis profundo. Desarrollar un pensamiento más crítico y sistémico es un área de oportunidad.`;
+                        break;
+                    case 'Dilemas':
+                        if (avgScore > 2.5) strength = `En los dilemas complejos que oponen distintos valores, muestras una tendencia a encontrar un equilibrio pragmático, manejando las situaciones con flexibilidad y buen juicio.`;
+                        else opportunity = `Los escenarios que presentan conflictos de valores (eficiencia vs. respeto, etc.) parecen ser un desafío. Reflexionar sobre estos escenarios te permitirá definir un marco de actuación más sólido y coherente.`;
+                        break;
+                }
+                
+                if (strength) feedback += `<p><span class="strength">Fortaleza Identificada:</span> ${strength}</p>`;
+                if (opportunity) feedback += `<p><span class="opportunity">Área de Oportunidad:</span> ${opportunity}</p>`;
+                
+                return feedback;
+            }
+
+            // --- EVENT LISTENERS ---
+            startBtn.addEventListener('click', startQuiz);
+            prevBtn.addEventListener('click', prevQuestion);
+            nextBtn.addEventListener('click', nextQuestion);
+            finishBtn.addEventListener('click', showReport);
+            restartBtn.addEventListener('click', startQuiz);
+            toggleSummaryBtn.addEventListener('click', toggleSummary);
+            closeModalBtn.addEventListener('click', showReport);
+        });
+    </script>
+</body>
+</html>
