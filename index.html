@@ -55,9 +55,9 @@
         
         <!-- Pantalla de Inicio -->
         <div id="start-screen">
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 text-center">Cuestionario Avanzado de Competencias Comportamentales tipo Likert</h1>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 text-center">Cuestionario Avanzado de Competencias</h1>
             <p class="mt-4 text-gray-600 text-center">
-                Este cuestionario presenta escenarios complejos y dilemas éticos. Tendrás <strong>25 minutos</strong> para completarlo. Las preguntas se mostrarán en orden aleatorio en cada intento.
+                Esta versión del cuestionario presenta escenarios más complejos y dilemas éticos. Tendrás <strong>25 minutos</strong> para completarlo. Las preguntas se mostrarán en orden aleatorio en cada intento.
             </p>
             <div class="mt-8 flex justify-center">
                 <button id="start-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors shadow-md">
@@ -552,7 +552,7 @@
                 });
 
                 // Scaled score from 0 to 100
-                const scaledScore = answeredQuestionsCount > 0 ? Math.round(((totalScoreSum - answeredQuestionsCount) / (answeredQuestionsCount * 3)) * 100) : 0;
+                const scaledScore = answeredQuestionsCount > 0 ? (((totalScoreSum - answeredQuestionsCount) / (answeredQuestionsCount * 3)) * 100).toFixed(2) : 0;
                 
                 let scoreColorClass = 'text-red-600';
                 if (scaledScore >= 75) {
