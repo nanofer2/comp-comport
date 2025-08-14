@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cuestionario Interactivo DIAN (con Análisis)</title>
+    <title>Cuestionario Interactivo Likert (con Análisis)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -55,7 +55,7 @@
         
         <!-- Pantalla de Inicio -->
         <div id="start-screen">
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 text-center">Cuestionario Avanzado de Competencias COmportamentales tipo Likert</h1>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 text-center">Cuestionario Avanzado de Competencias Comportamentales - tipo Likert</h1>
             <p class="mt-4 text-gray-600 text-center">
                 este cuestionario presenta escenarios complejos y dilemas éticos. Tendrás <strong>25 minutos</strong> para completarlo. Las preguntas se mostrarán en orden aleatorio en cada intento.
             </p>
@@ -496,11 +496,16 @@
                     const ul = document.createElement('ul');
                     ul.className = 'space-y-4';
                     resultsByCategory[category].forEach(item => {
+                        let userAnswerClass = 'text-blue-600';
+                        if (item.answer !== 'Sin respuesta' && item.answer !== item.optimal) {
+                            userAnswerClass = 'text-red-600';
+                        }
+
                         const li = document.createElement('li');
                         li.innerHTML = `
                             <p class="text-gray-700 list-item list-inside">${item.text}</p>
                             <div class="pl-6 mt-1">
-                                <span class="font-semibold text-blue-600">Tu respuesta: ${item.answer}</span><br>
+                                <span class="font-semibold ${userAnswerClass}">Tu respuesta: ${item.answer}</span><br>
                                 <span class="font-semibold text-green-600">Respuesta Óptima: ${item.optimal}</span>
                             </div>
                         `;
@@ -552,7 +557,7 @@
                 });
 
                 // Scaled score from 0 to 100
-                const scaledScore = answeredQuestionsCount > 0 ? (((totalScoreSum - answeredQuestionsCount) / (answeredQuestionsCount * 3)) * 100).toFixed(2) : 0;
+                const scaledScore = answeredQuestionsCount > 0 ? (((totalScoreSum - answeredQuestionsCount) / (answeredQuestionsCount * 3)) * 100).toFixed(2) : "0.00";
                 
                 let scoreColorClass = 'text-red-600';
                 if (scaledScore >= 75) {
